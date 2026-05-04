@@ -4,5 +4,6 @@ Allow: /
 # Block fragment files from indexing (they are not standalone pages)
 Disallow: /nav.html
 Disallow: /footer.html
+Disallow: /invoice-generator.html
 
 Sitemap: https://betserlife.com/sitemap.xml
