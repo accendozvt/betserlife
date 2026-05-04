@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Betser Life — Invoice Generator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a1a}
+.app-bar{background:#0c3d6b;padding:10px 28px;display:flex;align-items:center;gap:14px}
+.app-bar img{height:32px}
+.app-bar span{color:#fff;font-size:14px;font-weight:500;opacity:.9}
+.wrap{max-width:800px;margin:22px auto;background:#fff;border-radius:10px;box-shadow:0 2px 14px rgba(0,0,0,.1);padding:28px 32px}
+.ftitle{font-size:12px;font-weight:700;color:#0c3d6b;letter-spacing:.1em;text-transform:uppercase;padding-bottom:8px;border-bottom:2px solid #dce8f5;margin-bottom:18px}
+.slabel{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7a9ab8;margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid #e5eef7}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+label{font-size:11px;color:#4a6a8a;font-weight:600}
+input,textarea,select{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;padding:7px 9px;border:1px solid #cdd9e5;border-radius:5px;background:#fff;color:#1a1a1a;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#185fa5}
+input[readonly]{background:#f3f7fc;color:#5a7a9a}
+textarea{resize:vertical;min-height:50px}
+.bsmall{padding:7px 12px;font-size:11px;font-weight:600;background:#dce8f5;color:#0c3d6b;border:1px solid #b5cee5;border-radius:5px;cursor:pointer}
+.bsmall:hover{background:#b5cee5}
+.bgen{width:100%;margin-top:20px;padding:12px;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;font-weight:700;background:#0c3d6b;color:#fff;border:none;border-radius:6px;cursor:pointer;letter-spacing:.04em}
+.bgen:hover{background:#185fa5}
+.enote{font-size:10.5px;color:#7a9ab8;margin-top:-6px;margin-bottom:12px;font-style:italic}
+/* autocomplete */
+.ac-wrap{position:relative}
+.ac-wrap input{width:100%}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #b5cee5;border-top:none;border-radius:0 0 5px 5px;max-height:220px;overflow-y:auto;z-index:999;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:7px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid #eef3f8;line-height:1.4}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:#dce8f5}
+.ac-item .ac-name{font-weight:600;color:#0c3d6b}
+.ac-item .ac-sub{font-size:10px;color:#7a9ab8;margin-top:1px}
+/* db panel */
+.dbs{border:1px solid #cdd9e5;border-radius:7px;overflow:hidden;margin-bottom:6px}
+.dbt{background:#eaf2fb;padding:9px 14px;font-size:11px;font-weight:700;color:#0c3d6b;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;border:none;width:100%;text-align:left}
+.dbi{padding:14px;display:none;background:#f8fbff}
+.dbi.open{display:block}
+.dbtable{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+.dbtable th{background:#dce8f5;padding:6px 9px;text-align:left;font-size:10px;font-weight:700;color:#3a6080;text-transform:uppercase;letter-spacing:.07em}
+.dbtable td{padding:5px 9px;border-bottom:1px solid #e8f0f7;vertical-align:middle}
+.dbtable tr:last-child td{border-bottom:none}
+.bdel{padding:2px 8px;font-size:10px;background:#fff0f0;color:#c0392b;border:1px solid #f5c0c0;border-radius:3px;cursor:pointer}
+.darow{display:grid;grid-template-columns:1.5fr 1.3fr 1fr 0.8fr 0.8fr auto;gap:7px;align-items:end}
+.darow input{font-size:11px;padding:6px 8px}
+.badd{padding:6px 12px;font-size:11px;font-weight:700;background:#0c3d6b;color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap}
+.badd:hover{background:#185fa5}
+#preview{display:none;margin-top:26px}
+.pactions{margin-bottom:12px}
+.bprint{width:100%;padding:10px;font-size:13px;font-weight:700;background:#fff;color:#0c3d6b;border:2px solid #0c3d6b;border-radius:6px;cursor:pointer}
+.bprint:hover{background:#dce8f5}
+
+/* ===== INVOICE ===== */
+.inv{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;border:1px solid #cdd9e5;border-radius:7px;overflow:hidden;font-size:12px}
+.ih{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 24px 14px;border-bottom:3px solid #0c3d6b}
+.ilogo{height:36px;object-fit:contain;display:block}
+.iaddr{font-size:9.5px;color:#555;line-height:1.65;margin-top:8px}
+.iaddr strong{color:#0c3d6b;display:block;font-size:10px;font-weight:700;margin-bottom:1px}
+.igstin{font-size:9.5px;color:#0c3d6b;font-weight:700;margin-top:2px}
+.ihr{text-align:right}
+.idtype{font-size:19px;font-weight:700;color:#0c3d6b;letter-spacing:.04em;text-transform:uppercase}
+.imeta{margin-top:6px;font-size:11px;line-height:1.9}
+.imeta .lb{color:#999}
+.imeta .vl{color:#1a1a1a;font-weight:600;margin-left:7px}
+.iorig{font-size:8.5px;color:#bbb;letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+.ib{padding:16px 24px}
+.iparties{display:grid;grid-template-columns:1.2fr 0.8fr;gap:18px;margin-bottom:14px}
+.iblbl{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7a9ab8;margin-bottom:4px;border-bottom:1px solid #e5eef7;padding-bottom:2px}
+.ibname{font-size:12.5px;font-weight:700;color:#0c3d6b;margin-bottom:2px}
+.ibaddr{font-size:10px;color:#444;line-height:1.65}
+.ibsup{font-size:10px;color:#444;margin-top:5px;line-height:1.6}
+.ibgstin{font-size:9.5px;color:#888;margin-top:3px}
+.idates{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #d5e2ee;border-radius:5px;overflow:hidden;margin-bottom:14px}
+.idc{padding:7px 12px;border-right:1px solid #d5e2ee}
+.idc:last-child{border-right:none}
+.dclbl{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#7a9ab8;margin-bottom:2px;font-weight:700}
+.dcval{font-size:11.5px;font-weight:700;color:#1a1a1a}
+.icbox{border:1px solid #d5e2ee;border-radius:5px;padding:9px 12px;display:grid;grid-template-columns:1.4fr 1.4fr 0.7fr;gap:8px;margin-bottom:14px;background:#f8fbff}
+.cblbl{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#7a9ab8;margin-bottom:2px;font-weight:700}
+.cbval{font-size:11.5px;font-weight:700;color:#1a1a1a}
+.ish{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7a9ab8;margin-bottom:6px}
+.itable{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;table-layout:fixed}
+.itable thead tr{background:#e5eef7}
+.itable th{padding:7px 9px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#3a6080;border-bottom:1px solid #c0d4e5}
+.itable th.r,.itable td.r{text-align:right}
+.itable td{padding:7px 9px;border-bottom:1px solid #edf3f8;color:#1a1a1a;vertical-align:top;line-height:1.4}
+.dsub{font-size:9.5px;color:#888;margin-top:1px}
+.tr-tot td{font-weight:700;font-size:12.5px;color:#0c3d6b;border-top:2px solid #0c3d6b;border-bottom:none;padding-top:9px;background:#f3f8fd}
+.tr-words td{font-size:10px;color:#666;font-style:italic;border-bottom:none;padding-top:2px;background:#f3f8fd}
+.tr-gst td{font-size:10px;color:#666;background:#f9fbfd;border-top:1px dashed #c0d4e5}
+.idisc{font-size:9.5px;color:#666;line-height:1.7;border-top:1px solid #e2eaf3;padding-top:10px;margin-top:2px}
+.idisc strong{color:#444}
+.ibank{margin-top:12px;border:1px solid #d5e2ee;border-radius:5px;padding:9px 12px;background:#f8fbff}
+.ibankt{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#7a9ab8;margin-bottom:5px;font-weight:700}
+.ibankg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.bklbl{font-size:8px;color:#7a9ab8;margin-bottom:1px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.bkval{font-size:10.5px;font-weight:700;color:#1a1a1a}
+.iftr{background:#e5eef7;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #c0d4e5;margin-top:14px}
+.ftrb{font-size:9px;color:#5a7a9a;line-height:1.65}
+.ftrs{text-align:right;font-size:10.5px;color:#444}
+.ftrs strong{display:block;font-size:11px;color:#0c3d6b;font-weight:700}
+.sigsp{height:26px}
+
+@media print{
+  body{background:#fff;margin:0}
+  .app-bar,.wrap>*:not(#preview){display:none!important}
+  #preview{display:block!important;margin:0;padding:0}
+  .pactions{display:none!important}
+  .inv{border:none;border-radius:0;box-shadow:none}
+  @page{margin:8mm;size:A4}
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .app-bar{padding:10px 16px}
+  .app-bar img{height:26px}
+  .app-bar span{font-size:12px}
+
+  .wrap{margin:10px;padding:16px 14px;border-radius:8px}
+  .ftitle{font-size:11px;margin-bottom:14px}
+  .slabel{margin:14px 0 7px}
+
+  .g2{grid-template-columns:1fr}
+  .g4{grid-template-columns:1fr 1fr}
+
+  .dbs .dbt{font-size:10px;padding:8px 12px}
+  .dbi{padding:10px}
+  .darow{grid-template-columns:1fr 1fr;gap:6px}
+  .darow input{font-size:11px}
+  .badd{grid-column:1/-1}
+
+  .ac-list{font-size:12px}
+  .ac-item{padding:8px 10px}
+
+  .tax-toggle-row{gap:10px}
+  .tax-toggle-row label{font-size:11px}
+
+  .bgen{font-size:13px;padding:11px}
+  .bprint{font-size:13px;padding:10px}
+
+  /* Invoice responsive */
+  .inv{font-size:11px}
+  .ih{flex-direction:column;gap:10px;padding:14px 14px 10px}
+  .ihr{text-align:left}
+  .idtype{font-size:16px}
+  .imeta{font-size:10px}
+  .ilogo{height:30px}
+
+  .ib{padding:12px 14px}
+  .iparties{grid-template-columns:1fr;gap:10px}
+
+  .idates{grid-template-columns:1fr}
+  .idc{border-right:none;border-bottom:1px solid #d5e2ee;padding:6px 12px}
+  .idc:last-child{border-bottom:none}
+
+  .icbox{grid-template-columns:1fr;gap:6px}
+
+  /* Scrollable table on mobile */
+  .itable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px}
+  .itable{font-size:10px;min-width:420px;margin-bottom:0}
+  .itable th,.itable td{padding:5px 6px}
+
+  .ibankg{grid-template-columns:1fr 1fr;gap:6px}
+
+  .iftr{flex-direction:column;gap:12px;padding:10px 14px}
+  .ftrs{text-align:left}
+  .ftrb{font-size:8.5px}
+}
+
+@media (max-width: 420px) {
+  .g4{grid-template-columns:1fr}
+  .darow{grid-template-columns:1fr}
+  .ibankg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<style>
+#pw-overlay{position:fixed;inset:0;background:#0c3d6b;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:0}
+#pw-box{background:#fff;border-radius:12px;padding:36px 32px;width:320px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.35);text-align:center}
+#pw-box img{height:38px;margin-bottom:18px;object-fit:contain}
+#pw-box h2{font-size:14px;font-weight:700;color:#0c3d6b;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+#pw-box p{font-size:12px;color:#7a9ab8;margin-bottom:20px}
+#pw-input{width:100%;font-family:"Segoe UI",Arial,sans-serif;font-size:15px;padding:10px 14px;border:2px solid #cdd9e5;border-radius:7px;outline:none;text-align:center;letter-spacing:.1em;margin-bottom:12px}
+#pw-input:focus{border-color:#185fa5}
+#pw-btn{width:100%;padding:11px;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;font-weight:700;background:#0c3d6b;color:#fff;border:none;border-radius:7px;cursor:pointer;letter-spacing:.04em}
+#pw-btn:hover{background:#185fa5}
+#pw-err{font-size:11.5px;color:#c0392b;margin-top:8px;min-height:18px;font-weight:600}
+#pw-box .pw-hint{font-size:10px;color:#b0c4d8;margin-top:14px}
+</style>
+<div id="pw-overlay">
+  <div id="pw-box">
+    <img src="" alt="Betser Life">
+    <h2>Invoice Generator</h2>
+    <p>Enter password to continue</p>
+    <input id="pw-input" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button id="pw-btn" onclick="checkPw()">Unlock</button>
+    <div id="pw-err"></div>
+    <div class="pw-hint">Betser Life Private Limited &mdash; Internal Tool</div>
+  </div>
+</div>
+<script>
+(function(){
+  // Simple hash check — avoids storing plain text in source
+  function hashStr(s){
+    let h=5381;
+    for(let i=0;i<s.length;i++) h=((h<<5)+h)^s.charCodeAt(i);
+    return (h>>>0).toString(16);
+  }
+  const HASH = hashStr("betmypc321"); // precomputed at build time
+  // Store unlock state in sessionStorage so page refresh requires re-entry
+  if(sessionStorage.getItem('bl_unlocked')==='1'){
+    document.getElementById('pw-overlay').style.display='none';
+  }
+  window.checkPw=function(){
+    const val=document.getElementById('pw-input').value;
+    if(hashStr(val)===HASH){
+      sessionStorage.setItem('bl_unlocked','1');
+      const ov=document.getElementById('pw-overlay');
+      ov.style.transition='opacity .3s';
+      ov.style.opacity='0';
+      setTimeout(()=>ov.style.display='none',300);
+    } else {
+      const err=document.getElementById('pw-err');
+      err.textContent='Incorrect password. Try again.';
+      const inp=document.getElementById('pw-input');
+      inp.value='';
+      inp.style.borderColor='#c0392b';
+      setTimeout(()=>{inp.style.borderColor='';err.textContent='';},2000);
+    }
+  };
+})();
+</script>
+
+<div class="app-bar">
+  <img src="data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAyAAD/4QMvaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA5LjEtYzAwMyA3OS45NjkwYTg3ZmMsIDIwMjUvMDMvMDYtMjA6NTA6MTYgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCAyNy4xIChXaW5kb3dzKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDQjFBOUU1RjNCNDAxMUYxOUYwMUU4MEU3OTkxMTExNiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDQjFBOUU2MDNCNDAxMUYxOUYwMUU4MEU3OTkxMTExNiI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkNCMUE5RTVEM0I0MDExRjE5RjAxRTgwRTc5OTExMTE2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkNCMUE5RTVFM0I0MDExRjE5RjAxRTgwRTc5OTExMTE2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQACAYGBgYGCAYGCAwIBwgM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Ns0W4/EVxDEOMjzxkkd7uR/a4rqos6e6km9Y0bsaMlsRQMjyxO85oiIq6lREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREX/2Q==" alt="Betser Life">
+  <span>Invoice Generator</span>
+</div>
+
+<div class="wrap">
+  <div class="ftitle">New Invoice</div>
+
+  <!-- Doctor Database Panel -->
+  <div class="dbs">
+    <button class="dbt" onclick="toggleDB()">
+      Doctor Database — Add &amp; Manage
+      <span id="dbhint" style="font-size:10px;color:#7a9ab8;font-weight:400;text-transform:none;letter-spacing:0">▼ Expand</span>
+    </button>
+    <div class="dbi" id="dbi">
+      <table class="dbtable">
+        <thead><tr><th>Doctor Name</th><th>Reg. No.</th><th>Speciality</th><th>Consult (₹)</th><th>Betser (₹)</th><th></th></tr></thead>
+        <tbody id="dbtbody"></tbody>
+      </table>
+      <div style="font-size:10px;font-weight:700;color:#4a6a8a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Add New Doctor</div>
+      <div class="darow">
+        <input id="db-n" placeholder="Doctor Name"/>
+        <input id="db-r" placeholder="Reg. No."/>
+        <input id="db-s" placeholder="Speciality"/>
+        <input id="db-c" type="number" placeholder="Consult ₹"/>
+        <input id="db-b" type="number" placeholder="Betser ₹"/>
+        <button class="badd" onclick="addDoc()">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="slabel">Invoice Details</div>
+  <div class="g2">
+    <div class="f"><label>Betser Invoice Number</label><input id="inv_no" placeholder="e.g. BLI/132/25-26"/></div>
+    <div class="f"><label>Invoice Date</label><input id="inv_date" type="date"/></div>
+  </div>
+
+  <div class="slabel">Patient / Client</div>
+  <div class="g2">
+    <div class="f"><label>Patient Name (Consultation Booked For)</label><input id="patient" placeholder="Full name of patient"/></div>
+    <div class="f"><label>Bill To — Payer Name (if different)</label><input id="billto" placeholder="Leave blank if same as patient"/></div>
+  </div>
+  <div class="g2">
+    <div class="f"><label>Client Address</label><textarea id="addr" placeholder="Full address, city, state, pincode"></textarea></div>
+    <div>
+      <div class="f"><label>Place of Supply</label><input id="pos" placeholder="e.g. Thane"/></div>
+      <div class="f"><label>Client GSTIN (optional)</label><input id="gstin" placeholder="Leave blank if none"/></div>
+    </div>
+  </div>
+
+  <div class="slabel">Booking &amp; Appointment</div>
+  <div class="g2">
+    <div class="f"><label>Booking Date</label><input id="bkdate" type="date"/></div>
+    <div class="f"><label>Appointment Date</label><input id="cdate" type="date"/></div>
+  </div>
+
+  <div class="slabel">Consultant — Type name or select from list</div>
+  <div class="f">
+    <label>Doctor Name (type to search)</label>
+    <div class="ac-wrap">
+      <input id="cname" placeholder="Start typing doctor name…" autocomplete="off" oninput="acSearch(this.value)" onkeydown="acKey(event)" onfocus="acSearch(this.value)"/>
+      <div class="ac-list" id="ac-list"></div>
+    </div>
+  </div>
+  <p class="enote">Fields below auto-fill when you select from suggestions. All editable — adjust for discounts or special cases.</p>
+  <div class="g2">
+    <div class="f"><label>Registration Number</label><input id="creg" placeholder="e.g. TCMC 4888"/></div>
+    <div class="f"><label>Speciality</label><input id="spec" placeholder="e.g. Cardiology"/></div>
+  </div>
+  <div style="text-align:right;margin-top:-6px;margin-bottom:12px">
+    <button class="bsmall" onclick="clearDoc()">Clear / Manual Entry</button>
+  </div>
+
+  <div class="slabel">Amounts — Enter Betser Total (GST split auto-calculated at 18%)</div>
+  <div class="g4">
+    <div class="f"><label>Consultant Charges (₹)</label><input id="cfee" type="number" placeholder="e.g. 2000" oninput="autoTotal()"/></div>
+    <div class="f"><label>Betser Fee (₹) incl. 18% GST</label><input id="btotal" type="number" placeholder="e.g. 1300" oninput="calcGST()"/></div>
+    <div class="f"><label>Taxable Value (auto)</label><input id="btax" readonly placeholder="Auto"/></div>
+    <div class="f"><label>GST 18% Amount (auto)</label><input id="gstamt" readonly placeholder="Auto"/></div>
+  </div>
+  <div class="f"><label>Grand Total (₹) — auto-summed, override if needed</label><input id="grand" type="number" placeholder="Auto-calculated"/></div>
+
+  <button class="bgen" onclick="gen()">Generate Invoice Preview</button>
+
+  <div id="preview">
+    <div class="pactions" style="margin-top:18px">
+      <button class="bprint" onclick="doPrint()">🖨 Print / Save as PDF</button>
+    </div>
+    <div class="inv" id="invout"></div>
+  </div>
+</div>
+
+<script>
+const LOGO="data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAyAAD/4QMvaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA5LjEtYzAwMyA3OS45NjkwYTg3ZmMsIDIwMjUvMDMvMDYtMjA6NTA6MTYgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCAyNy4xIChXaW5kb3dzKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDQjFBOUU1RjNCNDAxMUYxOUYwMUU4MEU3OTkxMTExNiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDQjFBOUU2MDNCNDAxMUYxOUYwMUU4MEU3OTkxMTExNiI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkNCMUE5RTVEM0I0MDExRjE5RjAxRTgwRTc5OTExMTE2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkNCMUE5RTVFM0I0MDExRjE5RjAxRTgwRTc5OTExMTE2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+/+4ADkFkb2JlAGTAAAAAAf/bAIQACAYGBgYGCAYGCAwIBwgM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Ns0W4/EVxDEOMjzxkkd7uR/a4rqos6e6km9Y0bsaMlsRQMjyxO85oiIq6lREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREX/2Q==";
+const DB_DEFAULT=[{"name": "Dr. Mahesh K Nair", "reg": "TCMC 65941 & MMC 2009041632", "spec": "Cosmetic Plastic Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Cherian Roy", "reg": "TCMC 51440", "spec": "Critical Care Medicine", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sumesh Chandran", "reg": "KSDC 6573", "spec": "Dental", "cfee": 1000, "bfee": 550}, {"name": "Dr. Mereesha Noushad", "reg": "KSDC 8088 & D63940 - MOH (UAE)", "spec": "Dental", "cfee": 1000, "bfee": 550}, {"name": "Dr. Harshal Ranglani", "reg": "MMC 2015052623", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Jyothi Sathydevi", "reg": "TCMC 31960", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. S. K. Selva Prabu", "reg": "TNMC 77984", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Maridas Tom Thomas", "reg": "TCMC 77980", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Leena Elizabeth Mathew", "reg": "TCMC 36362", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Antoney Unni Xavier", "reg": "TCMC 36457", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sugandh Garg", "reg": "PMC 36570", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Thanuja Ravishankar", "reg": "KMC 126789", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Irene Rachel James", "reg": "77577", "spec": "Diabetology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Raghu M S", "reg": "KMC 76955", "spec": "Endocrinology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Joseph Nadakkavukaran", "reg": "MCI 12-43879", "spec": "ENT", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ranju R L", "reg": "TCMC 44802", "spec": "ENT", "cfee": 1000, "bfee": 550}, {"name": "Dr. Arun Nair", "reg": "TCMC 32210", "spec": "Gastroenterology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Adarsh Rajendran P.", "reg": "TCMC 37086", "spec": "Gastroenterology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Mariya Biju", "reg": "TCMC 85940", "spec": "General Physician", "cfee": 1000, "bfee": 550}, {"name": "Dr. Santosh C. Gudimani", "reg": "", "spec": "General Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vivek P. Sarma", "reg": "TCMC 29146", "spec": "General Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Naveen Ganjoo", "reg": "KMC 75280", "spec": "Hepatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Umashankar U. S", "reg": "TNMC 176140", "spec": "Internal Medicine", "cfee": 1000, "bfee": 550}, {"name": "Dr. Irwin P T", "reg": "TCMC 41137", "spec": "Neurology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vishal Pawar", "reg": "MMC 2003030783", "spec": "Neurology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Kokkula Praneeth", "reg": "APMC 92741", "spec": "Neurosurgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Hemanth Kumar", "reg": "KMC 94422", "spec": "Oncology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ajmal Sherif P", "reg": "TCMC 38042", "spec": "Oncology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Shoufeej P. M", "reg": "TCMC 37166", "spec": "Oncology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Arun Rajan", "reg": "TCMC 48929", "spec": "Ophthalmology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Hemant Kumar", "reg": "TCMC 52055", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ganesh Navaneedhan", "reg": "TCMC 39118", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Narayanan SK", "reg": "TCMC 38076", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Anoob R C", "reg": "TCMC 46453 & GMC UK 7823925", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Jim Johns", "reg": "TCMC 56026", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sreekumar Raghavan", "reg": "TNMC 51469", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Manoj Muthu", "reg": "TNMC 95323", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vivek Vincent", "reg": "TCMC 73209", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Venkatesh Kumar G", "reg": "TNMC 78289", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Arathy Vysakh", "reg": "TCMC 51709", "spec": "Paediatrics", "cfee": 1000, "bfee": 550}, {"name": "Dr. B. Jayakrishnan", "reg": "TCMC 27156", "spec": "Paediatrics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Karthik Surya Ramanujam", "reg": "TNMC 79370", "spec": "Paediatrics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Asish Mohakud", "reg": "OCMR 18080/2011", "spec": "Paediatrics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sudhindra Dharmavaram", "reg": "KMC 80575", "spec": "Pain Management", "cfee": 1000, "bfee": 550}, {"name": "Dr. Boby Sarah", "reg": "TCMC 31830", "spec": "Palliative Care", "cfee": 1000, "bfee": 550}, {"name": "Dr. Dawny Mathew", "reg": "TCMC 49159", "spec": "Psychiatry", "cfee": 1000, "bfee": 550}, {"name": "Dr. Yeshwant Solanki", "reg": "MMC 2019042593", "spec": "Psychiatry", "cfee": 1000, "bfee": 550}, {"name": "Dr. Zone Xavier Thaliath", "reg": "TCMC 49143", "spec": "Pulmonology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ajoy Samuel Mammen", "reg": "TCMC 42157", "spec": "Pulmonology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Varun Babu", "reg": "TCMC 41297 & Kuwait Ministry of Health License No. 1331677019", "spec": "Radiology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Rajesh V. Helavar", "reg": "KMC 71300", "spec": "Radiology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Glaxon Alex", "reg": "TCMC 38250", "spec": "Rheumatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ravi Shankar", "reg": "KMC 95920", "spec": "Urology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vinit Paliwal", "reg": "MMC 2011072298", "spec": "Vascular Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Alexander G", "reg": "TCMC 42928", "spec": "Cosmetic Plastic Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Gigy George", "reg": "KSDC 23255 & IDA 167764", "spec": "Dental", "cfee": 1000, "bfee": 550}, {"name": "Dr. Georgie P. Zachariah", "reg": "DCI - 13108; MMDC - 5349", "spec": "Dental", "cfee": 1000, "bfee": 550}, {"name": "Dr. Mini Jose", "reg": "KSDC 831/A", "spec": "Dental", "cfee": 1000, "bfee": 550}, {"name": "Dr. Ashwini B", "reg": "TCMC 71678", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Kiran Joshy", "reg": "KMC 79326", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Pallavi Rathi", "reg": "MMC 200602562", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sana Shems", "reg": "TCMC 58662", "spec": "Dermatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Leelavathy Kandaswamy", "reg": "TNMC74209, GMC6154437", "spec": "Endocrinology", "cfee": 1000, "bfee": 550}, {"name": "Dr. S. Sunil Kumar", "reg": "KMC 23492", "spec": "ENT", "cfee": 1000, "bfee": 550}, {"name": "Dr. Haripriya G. R", "reg": "TNMC 126862", "spec": "ENT", "cfee": 1000, "bfee": 550}, {"name": "Dr. Bejoy Abraham", "reg": "TCMC 29401", "spec": "Gastroenterology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Srinivas S", "reg": "TNMC 60934", "spec": "Gastroenterology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Bimal John", "reg": "TCMC 29781", "spec": "Gynaecology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sini Venugopal", "reg": "OCMR 13754", "spec": "Gynaecology", "cfee": 1000, "bfee": 550}, {"name": "Dr. M. Gopinathan", "reg": "TNMC 101814", "spec": "Hematology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sanoop Kumar", "reg": "TCMC 71223, TNMC 54928", "spec": "Internal Medicine", "cfee": 1000, "bfee": 550}, {"name": "Dr. Yasir Islam", "reg": "MCI 31124", "spec": "Internal Medicine", "cfee": 1000, "bfee": 550}, {"name": "Dr. Rishit Harbada", "reg": "MMC 2012061834", "spec": "Nephrology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Aditya Gudhate", "reg": "MMC 2017083993", "spec": "Neurology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Shishir Duble", "reg": "KMC 87111", "spec": "Neurology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Niti Krishna Raizada", "reg": "KMC 92267", "spec": "Oncology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vasu Kumar", "reg": "DMC/R/03899", "spec": "Ophthalmology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Anand Halyal", "reg": "KMC 73911", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Raghavendra Rao", "reg": "KMC 61474", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Jins Wilson", "reg": "TCMC 71226", "spec": "Orthopaedics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Srihari Modugala", "reg": "KMC 72064", "spec": "Paediatrics", "cfee": 1000, "bfee": 550}, {"name": "Dr. Anand Raja", "reg": "TCMC 51345 ( Kerala State Medical Council )", "spec": "Physical Medicine and Rehabilitation", "cfee": 1000, "bfee": 550}, {"name": "Major Dr. Guru Prakash K. V", "reg": "KMC 74416", "spec": "Psychiatry", "cfee": 1000, "bfee": 550}, {"name": "Dr. Indu Bubna", "reg": "MCI 26137 & MMC 2004123892", "spec": "Pulmonology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Hirennappa B Udnur", "reg": "KMC 65473", "spec": "Pulmonology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Sabarinath Mahadevan", "reg": "TNMC 89974", "spec": "Rheumatology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Suraj Muralidhar", "reg": "KMC 104106", "spec": "Urology", "cfee": 1000, "bfee": 550}, {"name": "Dr. Arun Prasanth", "reg": "TNMC 10564", "spec": "Vascular Surgery", "cfee": 1000, "bfee": 550}, {"name": "Dr. Vini Vivek", "reg": "TCMC 41428", "spec": "Psychiatry", "cfee": 1000, "bfee": 550}, {"name": "Dr. Jeyapal V", "reg": "TCMC 14408", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Bharath Chandran C", "reg": "TCMC 4888", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mahadevan Ramachandran", "reg": "TCMC 18757", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sanjay B.S.", "reg": "KMC 37715", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prashant Shah", "reg": "TNMC 108305", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Venugopal Seemakurthi", "reg": "APSDC A632", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ciju P Cherian", "reg": "KSDC 2068", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Rajesh Kumar P", "reg": "TNSDC 2224", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Annie Mohan", "reg": "KSDC 5539", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sanjay Kumar", "reg": "A-1131", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sharad Kumar", "reg": "A-9319", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Nandini Nair", "reg": "TCMC 11914", "spec": "Dermatology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Rahul Pillai", "reg": "TNMC 36682", "spec": "Dermatology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Alexander Koshy", "reg": "TCMC 4798", "spec": "Diabetology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ramachandran Mahadeva Iyer", "reg": "TCMC 1131", "spec": "Diabetology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Neha Saraf", "reg": "TCMC 86282", "spec": "Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Neha Shah", "reg": "TNMC 108304", "spec": "Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. M N Pavan Kumar", "reg": "TSMC 59707", "spec": "Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ramanjaneyulu Erukulla", "reg": "TSMC 12979", "spec": "Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Colin A", "reg": "TCMC 29541", "spec": "General Physician", "cfee": 2000, "bfee": 550}, {"name": "Dr. Rajyashree Narayanan Kutty", "reg": "TNMC 47903", "spec": "General Surgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. Chitra Sudeep", "reg": "TCMC 13635", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Aysha P V", "reg": "TCMC 13719", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Veena Choodamani", "reg": "TCMC 23646", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Shobhana Mohandas", "reg": "TCMC 17487", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Hemant Kanojia", "reg": "MMC 79732", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sanjay Ganesh Nigudkar", "reg": "MMC 60710", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Balakumari", "reg": "TNMC 36935", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sadhana Devi", "reg": "TNMC 71426", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Josy Panikulam", "reg": "TCMC 15682 & Specialist Internal Medicine Full time License ( DHA id 00240546 )( Dubai Health Authority), UAE.", "spec": "Internal Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Layajeeth Shaam", "reg": "KMC74722", "spec": "Internal Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Georgy K. Nainan", "reg": "TCMC 8366", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sarita Vinod", "reg": "TNMC 91816", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Shashank Aroor", "reg": "KMC 87800", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ramnarayan Ramachandran", "reg": "TNMC 83116", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Jibu K. Jo", "reg": "TCMC 28239", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Arun Oommen", "reg": "TCMC 30017", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Shruthi N M", "reg": "KMC 87134", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Skanda Moorthy", "reg": "KMC 94019", "spec": "Neurosurgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. R.V. Parameswaran", "reg": "KMC 61757", "spec": "Nuclear Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Aju Mathew", "reg": "TCMC 35218", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. P. Radhika", "reg": "APMC 41249", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sujit Jos", "reg": "TCMC 27981", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mahendra SK", "reg": "KMC 34552", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mahesh Bijjawara", "reg": "KMC 47503", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sajan Jerome A. G", "reg": "TCMC 20302", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Tharian Anil K", "reg": "TCMC 26525", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Shrishu Ravidas Kamath", "reg": "TNMC 82890", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. P. K Rajeev", "reg": "APMC 42900", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Thomas Antony", "reg": "TCMC 27299", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sebaranjan Biswal", "reg": "OCMR 13389", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Radhakrishnan M. P", "reg": "TCMC 21312", "spec": "Psychiatry", "cfee": 2000, "bfee": 550}, {"name": "Dr. Nimitha Jayan", "reg": "TCMC 47440", "spec": "Psychiatry", "cfee": 2000, "bfee": 550}, {"name": "Dr. Soumini Sivadas", "reg": "MMC 54091", "spec": "Pulmonology", "cfee": 2000, "bfee": 550}, {"name": "Dr. G.S. Kailash", "reg": "TNMC 28543", "spec": "Pulmonology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ajit Surin", "reg": "OCMR 13880", "spec": "Rheumatology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Vivek A. Saraf", "reg": "TCMC 33336", "spec": "Surgical Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ninan Thomas Panicker", "reg": "KMC 31984", "spec": "Urology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Rama Krishna Kassa", "reg": "TSMC 35642", "spec": "Urology", "cfee": 2000, "bfee": 550}, {"name": "Dr. R. Muralidhar", "reg": "KMC 24907", "spec": "Vascular Surgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prakash Bhailal Adatia", "reg": "G9069", "spec": "Anaesthesia", "cfee": 2000, "bfee": 550}, {"name": "Dr. K. N. Srinivasan", "reg": "KMC 40788", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prem Sekar", "reg": "TNMC 43020", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Narendra Kumar", "reg": "MMC 077710", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ullas Raghavan", "reg": "TCMC 13383", "spec": "Cosmetic Plastic Surgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. Geetha K. Patil", "reg": "KSDC 925A", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Usha Ravindran", "reg": "MSDC A-3130", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. S. S Khambay", "reg": "A - 1880", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Neera Kumar", "reg": "A-1325", "spec": "Dental", "cfee": 2000, "bfee": 550}, {"name": "Dr. Jyothy K", "reg": "TNMC 141095", "spec": "Dermatology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Radha Unnikrishnan", "reg": "TCMC 20066", "spec": "Diabetology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Muneeb Yasir", "reg": "KMC 56805", "spec": "Endocrinology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Rajesh Raju George", "reg": "TCMC 21998", "spec": "ENT", "cfee": 2000, "bfee": 550}, {"name": "Dr. Salim M.", "reg": "TCMC 14444", "spec": "ENT", "cfee": 2000, "bfee": 550}, {"name": "Dr. C. John Panicker", "reg": "TCMC 8371", "spec": "ENT", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mohamed Ismail", "reg": "TCMC 13695", "spec": "Gastroenterology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Subash Rau", "reg": "TNMC 53814", "spec": "General Physician", "cfee": 2000, "bfee": 550}, {"name": "Dr. Malligurki Vamsi Krishna", "reg": "KMC 54861", "spec": "General Surgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. Bavin B.", "reg": "TCMC 65086", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Chandrika Muralidhar", "reg": "KMC 28548", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Manoj Chellani", "reg": "MCI 19272", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Christina Irwin", "reg": "TNMC 39861", "spec": "Gynecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Hareesha Babu K", "reg": "KMC 49150", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Milly Mathew", "reg": "TCMC 155628", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Girish N S", "reg": "KMC 62799", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Saroja Nair", "reg": "TCMC 9768", "spec": "Nephrology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ravi Dadlani", "reg": "APMC 97272 & UAE - DOH GD38191", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Jojo V Joseph", "reg": "TCMC 20502 & GMC 24576", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Boben Thomas", "reg": "TCMC 30811", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. K. Govind Babu", "reg": "KMC 21290", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Soumil Jitendra Vyas", "reg": "MMC 77978", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Srinivas Prasad Perla", "reg": "APMC 37867", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. M. Suneetha", "reg": "41913", "spec": "Oncology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Madhvi J. S", "reg": "G 16755", "spec": "Ophthalmology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Jayateerth Kulkarni", "reg": "KMC 28121 & GMC, UK: 4557764", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Padma Shri Dr. John Ebnezar", "reg": "KMC 24319", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Upendra B. N", "reg": "KMC 53465", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. G. Thiruvengita Prasad", "reg": "TNMC 58952", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Anupam Ahuja", "reg": "HN 2575", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Manoj Kumar Lath", "reg": "OCMR 14475", "spec": "Otorhinolaryngologist", "cfee": 2000, "bfee": 550}, {"name": "Dr. P. M. Muhamed Ismail", "reg": "TCMC 18314", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Zinal Unadkat Shah", "reg": "MMC 86175", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Saddiq M. H", "reg": "21033", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Arjit Mohapatra", "reg": "12036/1994/OCMR", "spec": "Paediatrics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ashish Sharma", "reg": "PMC 38115", "spec": "Psychiatry", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mohan K", "reg": "TNMC 58383", "spec": "Pulmonology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sheetal Suresh", "reg": "TNMC 68821", "spec": "Sleep Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prabhudev Salanki", "reg": "KMC 25920", "spec": "Urology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Suresh Prabhakar", "reg": "TCMC 15317", "spec": "Urology", "cfee": 2000, "bfee": 550}, {"name": "Dr. M.R. Ravi", "reg": "TCMC 7044", "spec": "ENT", "cfee": 1000, "bfee": 550}, {"name": "Dr. Raji Mathew", "reg": "TCMC 9332", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Tahsin Neduvanchery", "reg": "TCMC 34467", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Mathew John", "reg": "TCMC 26063", "spec": "Endocrinology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Niranjana Jayakrishnan", "reg": "TCMC 39396", "spec": "Gynaecology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Bobby Jose", "reg": "TCMC 25886", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. T.A. Patil", "reg": "KMC 22500", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Ganeshakrishnan Iyer", "reg": "KMC 79039", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prathap Kumar N", "reg": "TCMC 38974", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Murali B. K", "reg": "MCI 10806", "spec": "Orthopaedics", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sabarinath Menon", "reg": "TCMC 31203", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Joshy E V", "reg": "KMC 19127", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sunanda Anand", "reg": "MMC 2011123476", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Dr. Prithika Chary", "reg": "TNMC 21191", "spec": "Neurology", "cfee": 2000, "bfee": 550}, {"name": "Prof. Dr. Anil Pande", "reg": "TNMC 54759", "spec": "Neurosurgery", "cfee": 2000, "bfee": 550}, {"name": "Dr. Tiny Nair", "reg": "TCMC15715", "spec": "Cardiology", "cfee": 2000, "bfee": 550}, {"name": "Dr. N. Ramakrishnan", "reg": "TNMC 45732", "spec": "Internal Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Zubair Rahaman", "reg": "08M3099", "spec": "Internal Medicine", "cfee": 2000, "bfee": 550}, {"name": "Dr. Sweta Adatia", "reg": "GMC G-33354", "spec": "Neurology", "cfee": 5100, "bfee": 1300}, {"name": "Dr. Prakhar D. Jain", "reg": "MMC 2014/10/4618", "spec": "Psychiatry", "cfee": 2000, "bfee": 550}];
+
+let docs=JSON.parse(localStorage.getItem('bld2')||'null');
+if(!docs){docs=DB_DEFAULT.map(d=>Object.assign({},d));save();}
+
+function save(){localStorage.setItem('bld2',JSON.stringify(docs));}
+
+function renderDB(){
+  document.getElementById('dbtbody').innerHTML=docs.map((d,i)=>`<tr>
+    <td>${d.name}</td>
+    <td style="font-size:10px">${d.reg||'—'}</td>
+    <td>${d.spec}</td>
+    <td>₹${(+d.cfee).toLocaleString('en-IN')}</td>
+    <td>₹${(+d.bfee).toLocaleString('en-IN')}</td>
+    <td><button class="bdel" onclick="delDoc(${i})">✕</button></td>
+  </tr>`).join('');
+}
+
+function toggleDB(){
+  const el=document.getElementById('dbi');
+  el.classList.toggle('open');
+  document.getElementById('dbhint').textContent=el.classList.contains('open')?'▲ Collapse':'▼ Expand';
+  if(el.classList.contains('open')) renderDB();
+}
+
+function g(id){return document.getElementById(id).value.trim();}
+
+function addDoc(){
+  const n=g('db-n'),r=g('db-r'),s=g('db-s');
+  const c=parseFloat(document.getElementById('db-c').value)||0;
+  const b=parseFloat(document.getElementById('db-b').value)||0;
+  if(!n||!s){alert('Name and Speciality required.');return;}
+  docs.push({name:n,reg:r,spec:s,cfee:c,bfee:b});
+  save();renderDB();
+  ['db-n','db-r','db-s','db-c','db-b'].forEach(id=>document.getElementById(id).value='');
+}
+
+function delDoc(i){
+  if(!confirm('Remove this doctor?'))return;
+  docs.splice(i,1);save();renderDB();
+}
+
+// ---- AUTOCOMPLETE ----
+let acIdx=-1;
+
+function acSearch(val){
+  const list=document.getElementById('ac-list');
+  const q=val.trim().toLowerCase();
+  if(!q){list.classList.remove('show');list.innerHTML='';acIdx=-1;return;}
+  const matches=docs.filter(d=>d.name.toLowerCase().includes(q)||d.spec.toLowerCase().includes(q)).slice(0,12);
+  if(!matches.length){list.classList.remove('show');list.innerHTML='';acIdx=-1;return;}
+  list.innerHTML=matches.map((d,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acPick(event,this)" data-idx="${docs.indexOf(d)}">
+    <div class="ac-name">${d.name}</div>
+    <div class="ac-sub">${d.spec}${d.reg?' · '+d.reg:''}</div>
+  </div>`).join('');
+  list.classList.add('show');
+  acIdx=-1;
+}
+
+function acPick(e,el){
+  e.preventDefault();
+  const idx=parseInt(el.dataset.idx);
+  fillDoc(idx);
+  document.getElementById('ac-list').classList.remove('show');
+}
+
+function acKey(e){
+  const list=document.getElementById('ac-list');
+  const items=list.querySelectorAll('.ac-item');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);highlight(items);}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);highlight(items);}
+  else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();const idx=parseInt(items[acIdx].dataset.idx);fillDoc(idx);list.classList.remove('show');}
+  else if(e.key==='Escape'){list.classList.remove('show');acIdx=-1;}
+}
+
+function highlight(items){
+  items.forEach((el,i)=>{el.classList.toggle('active',i===acIdx);});
+  if(acIdx>=0) items[acIdx].scrollIntoView({block:'nearest'});
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.ac-wrap')) document.getElementById('ac-list').classList.remove('show');
+});
+
+function fillDoc(idx){
+  const d=docs[idx];
+  document.getElementById('cname').value=d.name;
+  document.getElementById('creg').value=d.reg||'';
+  document.getElementById('spec').value=d.spec;
+  document.getElementById('cfee').value=d.cfee;
+  document.getElementById('btotal').value=d.bfee;
+  calcGST();
+}
+
+function clearDoc(){
+  ['cname','creg','spec','cfee','btotal','btax','gstamt','grand'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ac-list').classList.remove('show');
+}
+
+// ---- CALCULATIONS ----
+function calcGST(){
+  const t=parseFloat(document.getElementById('btotal').value)||0;
+  if(t>0){
+    const tax=t/1.18;
+    document.getElementById('btax').value=tax.toFixed(2);
+    document.getElementById('gstamt').value=(t-tax).toFixed(2);
+  }else{
+    document.getElementById('btax').value='';
+    document.getElementById('gstamt').value='';
+  }
+  autoTotal();
+}
+
+function autoTotal(){
+  const c=parseFloat(document.getElementById('cfee').value)||0;
+  const b=parseFloat(document.getElementById('btotal').value)||0;
+  if(c||b) document.getElementById('grand').value=(c+b).toFixed(2);
+}
+
+// ---- HELPERS ----
+function fmt(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function fM(v){if(!v&&v!==0)return'—';return'₹'+(+v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function toWords(n){
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  n=Math.round(+n||0);if(!n)return'Zero';
+  function h(n){if(!n)return'';if(n<20)return a[n]+' ';if(n<100)return b[~~(n/10)]+' '+(a[n%10]?a[n%10]+' ':'');return a[~~(n/100)]+' Hundred '+(n%100?h(n%100):'');}
+  let w='';
+  if(n>=10000000){w+=h(~~(n/10000000))+'Crore ';n%=10000000;}
+  if(n>=100000){w+=h(~~(n/100000))+'Lakh ';n%=100000;}
+  if(n>=1000){w+=h(~~(n/1000))+'Thousand ';n%=1000;}
+  if(n>=100){w+=h(~~(n/100))+'Hundred ';n%=100;}
+  if(n>0)w+=h(n);
+  return w.trim();
+}
+
+// ---- PRINT with filename ----
+function doPrint(){
+  const pt=g('patient')||'Patient';
+  const inv=g('inv_no')||'Invoice';
+  // Set document title = desired PDF filename
+  const orig=document.title;
+  document.title=pt+' - '+inv;
+  window.print();
+  setTimeout(()=>{document.title=orig;},1000);
+}
+
+// ---- GENERATE INVOICE ----
+function gen(){
+  const invNo=g('inv_no')||'—', invDate=fmt(g('inv_date'));
+  const pt=g('patient')||'—', bt=g('billto')||pt;
+  const addr=g('addr')||'—', pos=g('pos')||'—', gstin=g('gstin');
+  const bkd=fmt(g('bkdate')), cd=fmt(g('cdate'));
+  const cn=g('cname')||'—', cr=g('creg')||'—', sp=g('spec')||'—';
+  const cf=document.getElementById('cfee').value;
+  const btax=document.getElementById('btax').value;
+  const gst=document.getElementById('gstamt').value;
+  const bt2=document.getElementById('btotal').value;
+  const gr=document.getElementById('grand').value;
+  const wds=gr?toWords(Math.floor(+gr))+' Only':'—';
+
+  document.getElementById('invout').innerHTML=`
+<div class="ih">
+  <div>
+    <img class="ilogo" src="${LOGO}" alt="Betser Life">
+    <div class="iaddr">
+      <strong>BETSER LIFE PRIVATE LIMITED</strong>
+      TC 16/3766(11), Lotus Tower, Kumarapuram<br>
+      Thiruvananthapuram, Kerala, INDIA – 695011<br>
+      <span class="igstin">GSTIN: 32AAJCB5847N1Z9</span>
+    </div>
+  </div>
+  <div class="ihr">
+    <div class="idtype">Invoice</div>
+    <div class="imeta">
+      <div><span class="lb">Invoice No:</span><span class="vl">${invNo}</span></div>
+      <div><span class="lb">Date:</span><span class="vl">${invDate}</span></div>
+    </div>
+    <div class="iorig">Original for Recipient</div>
+  </div>
+</div>
+<div class="ib">
+  <div class="iparties">
+    <div>
+      <div class="iblbl">Invoice To</div>
+      <div class="ibname">${bt}</div>
+      <div class="ibaddr">${addr.replace(/\n/g,'<br>')}</div>
+      <div class="ibsup"><strong>Place of Supply:</strong> ${pos}<br><strong>RCM Applicable:</strong> No</div>
+      <div class="ibgstin">GSTIN: ${gstin||'—'}</div>
+    </div>
+    <div>
+      <div class="iblbl">Consultation Booked For</div>
+      <div class="ibname">${pt}</div>
+    </div>
+  </div>
+  <div class="idates">
+    <div class="idc"><div class="dclbl">Booking Date</div><div class="dcval">${bkd}</div></div>
+    <div class="idc"><div class="dclbl">Appointment Date</div><div class="dcval">${cd}</div></div>
+    <div class="idc"><div class="dclbl">Speciality</div><div class="dcval">${sp}</div></div>
+  </div>
+  <div class="ish">Consultant Details</div>
+  <div class="icbox">
+    <div><div class="cblbl">Consultant</div><div class="cbval">${cn}</div></div>
+    <div><div class="cblbl">Registration No.</div><div class="cbval">${cr}</div></div>
+    <div><div class="cblbl">Speciality</div><div class="cbval">${sp}</div></div>
+  </div>
+  <div class="ish">Charges</div>
+  <div class="itable-wrap"><table class="itable">
+    <thead><tr>
+      <th style="width:30px">Sl.</th>
+      <th>Description</th>
+      <th class="r" style="width:90px">Taxable Value</th>
+      <th class="r" style="width:62px">GST Rate</th>
+      <th class="r" style="width:78px">GST Amount</th>
+      <th class="r" style="width:88px">Total (INR)</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td>01.</td>
+        <td>Consultation Fee – ${sp}<div class="dsub">${cn} | Reg. No. ${cr}</div></td>
+        <td class="r">${fM(cf)}</td><td class="r">Nil</td><td class="r">—</td><td class="r">${fM(cf)}</td>
+      </tr>
+      <tr>
+        <td>02.</td>
+        <td>Online Platform Service Charge<div class="dsub">betserlife.com platform usage fee</div></td>
+        <td class="r">${fM(btax)}</td><td class="r">18%</td><td class="r">${fM(gst)}</td><td class="r">${fM(bt2)}</td>
+      </tr>
+      <tr class="tr-tot"><td colspan="2">Grand Total</td><td colspan="3"></td><td class="r">${fM(gr)}</td></tr>
+      <tr class="tr-words"><td colspan="6">Rupees ${wds}</td></tr>
+      <tr class="tr-gst">
+        <td colspan="2" style="font-size:9.5px;color:#888">GST Summary (HSN 9985)</td>
+        <td class="r">${fM(btax)}</td><td class="r">18%</td><td class="r">${fM(gst)}</td><td class="r">${fM(gst)}</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="idisc">
+    <strong>Declaration:</strong> The service charges outlined above are for the use of betserlife.com and for the consultation with ${cn}, Reg. No. ${cr}. The consultant fee of ${fM(cf)} is charged directly by the consultant and BETSER LIFE PVT LTD has no liability about the services rendered. We hereby declare that this invoice shows the actual amount of services provided as described above and all particulars are true and correct. E &amp; O.E.<br>
+    <em style="margin-top:4px;display:block">"BETSER LIFE PRIVATE LIMITED is not responsible for any adverse effects resulting from the opinions or services provided by the service providers."</em>
+  </div>
+  <div class="ibank">
+    <div class="ibankt">Our Bank Details</div>
+    <div class="ibankg">
+      <div><div class="bklbl">Bank</div><div class="bkval">ICICI Bank</div></div>
+      <div><div class="bklbl">Branch</div><div class="bkval">Trivandrum, Kowdiar</div></div>
+      <div><div class="bklbl">Account No.</div><div class="bkval">038905003777</div></div>
+      <div><div class="bklbl">IFSC</div><div class="bkval">ICIC0000389</div></div>
+    </div>
+  </div>
+</div>
+<div class="iftr">
+  <div class="ftrb">
+    BETSER LIFE PRIVATE LIMITED &nbsp;|&nbsp; CIN: U72900KL2021PTC067108<br>
+    www.betserlife.com &nbsp;|&nbsp; care@betserlife.com &nbsp;|&nbsp; +91 9495 866 100<br>
+    "Subject to Thiruvananthapuram (Kerala, India) Jurisdiction"
+  </div>
+  <div class="ftrs">
+    <span style="font-size:9px;color:#7a9ab8">For Betser Life Private Limited</span>
+    <div class="sigsp"></div>
+    <strong>Authorized Signatory</strong>
+    <div style="font-size:8.5px;color:#9ab0c4;font-style:italic;margin-top:4px;font-weight:400">This is an electronically generated invoice.<br>No physical signature is required.</div>
+  </div>
+</div>`;
+
+  document.getElementById('preview').style.display='block';
+  document.getElementById('preview').scrollIntoView({behavior:'smooth'});
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('inv_date').value=new Date().toISOString().split('T')[0];
+});
+</script>
+</body>
+</html>

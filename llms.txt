@@ -1,0 +1,42 @@
+# BETSER — Technology Solutions & Implementation
+# betserlife.com
+# llms.txt — Provides context for AI crawlers and LLMs
+
+> BETSER helps organisations improve visibility, apply technology wisely, and build systems that create impact across Health Tech, Digital & Applied AI, and Energy & Industrial domains.
+
+## About BETSER
+BETSER (Betser Life Pvt. Ltd.) is a technology solutions and implementation company based in Thiruvananthapuram, Kerala, India, with clients across 12+ countries. BETSER operates through its Betser product brand across three verticals.
+
+## Verticals
+
+### Health Tech (Betser Healthcare)
+- DDO (Doctors Digital Office) — AI-powered digital clinic for private practitioners
+- IHMS (Intelligent Hospital Management System) — unified hospital management
+- HMS+ — AI intelligence layer for existing hospital systems
+- OnePatientOneDoctor — personal AI health digital twin platform
+- Aide — hospital-wide AI neural network connecting 9 departments
+
+### Digital & Applied AI
+- Workflow & Process Automation
+- AI Agentic Solutions & Knowledge Assistants
+- Applied AI for Enterprises
+- Custom Development Projects
+
+### Energy & Industrial (Betser Energy)
+- Ampris — Electrical SCADA and Grid Orchestration
+- Plant Digital Twin — vendor-neutral enterprise intelligence layer
+- PIMS — Plant Information and Management System
+- FlowNexus — Pipeline Telemetry and Liquid Control
+- NexaProc — Enterprise Process Automation and Batch Control
+- P&ID Xtract — AI-powered P&ID Digitisation
+- PLC Logic Studio — AI PLC Programming and Simulation
+- SmartPanel Design — AI-powered Electrical Panel ECAD
+
+## Contact
+- Website: https://betserlife.com
+- Email: care@betsercare.com
+- Phone: +91 9495 866 100
+- Address: TC 16/3766(11), Lotus Tower, Kumarapuram, Thiruvananthapuram, Kerala 695011, India
+
+## Sitemap
+https://betserlife.com/sitemap.xml
