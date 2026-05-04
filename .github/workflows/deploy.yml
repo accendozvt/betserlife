@@ -1,0 +1,14 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Hostinger deployment
+        run: |
+          curl -X POST https://webhooks.hostinger.com/deploy/2d1eaab6c8f5156f07c822aecd187d75
